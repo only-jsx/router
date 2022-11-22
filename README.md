@@ -1,2 +1,2 @@
-# router
-Browser router for only-jsx runtime
+# only-jsx-router
+Declarative browser routing for only-jsx runtime

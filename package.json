@@ -1,0 +1,34 @@
+{
+    "name": "only-jsx-router",
+    "version": "0.0.1-beta.9",
+    "description": "Declarative browser routing for only-jsx runtime",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "only-jsx": "^0.0.1-beta.6",
+        "path-to-regexp": "^6.2.1"
+    },
+    "devDependencies": {
+        "typescript": "^4.8.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/only-jsx/router.git"
+    },
+    "bugs": {
+        "url": "https://github.com/only-jsx/router/issues"
+    },
+    "files": [
+        "README.md",
+        "dist/"
+    ],
+    "keywords": [
+        "Router"
+    ]
+}

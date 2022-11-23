@@ -10,9 +10,8 @@ function routeChildren(children: RouteChild | RouteChild[], ctx: Context): Route
     if (typeof children === 'function') {
         return routeChildren(children(ctx), ctx);
     } else if (Array.isArray(children)) {
-        return children.map(c => typeof c === 'function' ? routeChildren(c(ctx), ctx) as RouteChild : c)
+        return children.map(c => routeChildren(c, ctx) as RouteChild)
     }
-
     return children;
 }
 

@@ -16,7 +16,7 @@ export interface RouterContext {
     match?: (p: string, u: string) => PathMatch;
     matches?: PathMatch[];
     error: Error;
-    navigate: (p: string)=>void;
+    navigate: (p: string) => void;
     onupdated?: () => void;
     onnavigate?: () => void;
 }
@@ -25,8 +25,8 @@ export interface Context {
     router: RouterContext;
 }
 
-type RouteChildrenFunc = (ctx: Context) => HTMLElement | DocumentFragment;
-export type RouteChild = HTMLElement | DocumentFragment | RouteChildrenFunc;
+type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment | Comment;
+export type RouteChild = HTMLElement | DocumentFragment | Comment | RouteFunc;
 
 export interface RouterProps {
     children?: RouteChild | RouteChild[];

@@ -1,6 +1,6 @@
 {
     "name": "only-jsx-router",
-    "version": "0.0.1-beta.10",
+    "version": "0.0.1-beta.13",
     "description": "Declarative browser routing for only-jsx runtime",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "only-jsx": "^0.0.1-beta.6",
+        "only-jsx": "^0.0.1-beta.8",
         "path-to-regexp": "^6.2.1"
     },
     "devDependencies": {

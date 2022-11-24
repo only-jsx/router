@@ -25,7 +25,7 @@ export interface Context {
     router: RouterContext;
 }
 
-type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment;
+type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment | Comment;
 export type RouteChild = HTMLElement | DocumentFragment | Comment | RouteFunc;
 
 export interface RouterProps {

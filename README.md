@@ -3,7 +3,7 @@ Declarative browser routing for only-jsx runtime
 
 ## examples
 
-The source codes are in the repository https://github.com/only-jsx/examples/router.
+The source codes are in the repository https://github.com/only-jsx/examples/tree/main/router.
 
 ```tsx
 //index.tsx

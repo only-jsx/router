@@ -15,8 +15,8 @@ export interface RouterContext {
     params?: Params;
     match?: (p: string, u: string) => PathMatch;
     matches?: PathMatch[];
-    error: Error;
-    navigate: (p: string) => void;
+    error?: Error;
+    navigate?: (p: string, d?: any, r?: boolean) => void;
     onupdated?: () => void;
     onnavigate?: () => void;
 }
@@ -34,7 +34,7 @@ export interface RouterProps {
     onnavigate?: () => void;
 }
 
-function match(path: string, url: string) {
+function match(path: string, url: string): PathMatch {
     const keys: Key[] = [];
     const pattern = pathToRegexp(path, keys);
     const match = pattern.exec(url);
@@ -42,7 +42,7 @@ function match(path: string, url: string) {
         return {};
     }
 
-    const params: { [key: string]: string } = {};
+    const params: Params = {};
     for (let i = 1; i < match.length; i++) {
         params[keys[i - 1].name] = match[i];
     }
@@ -111,9 +111,13 @@ export default function Router({ children, onupdated, onnavigate }: RouterProps)
         router.onupdated?.();
     }
 
-    function navigate(path: string, data: any) {
+    function navigate(path: string, data: any, replace: boolean) {
         router.onnavigate?.();
-        history.pushState(data, '', path);
+        if (replace) {
+            history.replaceState(data, '', path);
+        } else {
+            history.pushState(data, '', path);
+        }
         update();
     }
 

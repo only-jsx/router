@@ -38,7 +38,7 @@ export interface RouterProps {
 }
 
 function match(path: string, url: string): PathMatch {
-    const keys = [];
+    const keys: Key[] = [];
     const tokens = parse(path);
     const pattern = tokensToRegexp(tokens, keys);
     const match = pattern.exec(url);

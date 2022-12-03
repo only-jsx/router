@@ -5,6 +5,9 @@
         "module": "ESNext",
         "target": "es5",
         "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
     },
-    "include": ["index.ts"]
+    "include": [
+        "index.ts"
+    ]
 }

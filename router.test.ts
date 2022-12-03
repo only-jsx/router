@@ -76,7 +76,7 @@ describe('Test Router component', () => {
     });
 
     test('with match and navigate props', () => {
-        const match = (path: string, url: string) => ({});
+        const match = (p: string, u?: string, s?: string, h?: string) => ({});
         const navigate = jest.fn((p) => { });
         const update = jest.fn(() => { });
         const element1 = document.createElement('div');

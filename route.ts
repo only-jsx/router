@@ -17,36 +17,30 @@ function routeChildren(children: RouteChild | RouteChild[], ctx: Context): Route
 
 export default function Route({ children, path, error }: RouteProps, ctx: Context) {
     if (!ctx?.router) {
-        return 'Routes are not allowed outside the Router component';
-    }
-
-    if (ctx.router.params && Object.keys(ctx.router.params).length > 1) {
-        return 'Parameters are not allowed in parent routes';
+        throw new Error('Routes are not allowed outside the Router component');
     }
 
     let routeParams = {};
-    let routePath = ctx.router.path + (path || '');
+    let routePath = (ctx.router.path || '') + (path || '');
+    const { pathname } = window.location;
 
     if (path) {
-        const { match, params } = ctx.router.match(routePath, window.location.pathname);
+        const { match, params, nextPath } = ctx.router.match(routePath, pathname);
 
         if (!match) {
             return null;
         }
 
         routeParams = params;
+        routePath = nextPath;
 
         if (!ctx.router.matches) {
             ctx.router.matches = [];
         }
 
-        ctx.router.matches.push({ match, params });
-
-        if (match.length > 1) {
-            routePath = match[0].substring(0, match[0].length - match[1].length);
-        }
+        ctx.router.matches.push({ match, params, nextPath });
     } else {
-        if (ctx.router.matches?.length) {
+        if (ctx.router.matches?.length || ctx.router.error) {
             return null;
         }
     }

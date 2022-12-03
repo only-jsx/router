@@ -23,8 +23,12 @@ const App = ({ props }: { props: AppProps }): DocumentFragment => {
     const state: UnloadState = {};
 
     let r = <Router>
+        {/*Regular expressions in path*/}
         <Route path="/router/(.*)">
             <Layout />
+            {/*Part of a parent route path before any named parameter or regexp*/}
+            {/*becames a prefix for a child route*/}
+            {/*so this actually matches to /router/home*/}
             <Route path="home"><Home /></Route>
             <Route path="await"><AwaitPage state={state}/></Route>
             <Route path="long-load"><LongLoad state={state}/></Route>
@@ -33,6 +37,7 @@ const App = ({ props }: { props: AppProps }): DocumentFragment => {
             </Route>
             <Route path="todos/(.*)" error={ErrorBoundary}>
                 <h5>Todo</h5>
+                {/*Named parameters*/}
                 <Route path=":id"><Todo state={state}/></Route>
             </Route>
             <Route path="error" error={ErrorBoundary}><ErrorComponent/></Route>

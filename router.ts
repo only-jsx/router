@@ -17,7 +17,7 @@ export interface RouterContext {
     matches?: PathMatch[];
     error?: Error;
     firstChild?: Node;
-    match?: (p: string, u: string) => PathMatch;
+    match?: (p: string, u?: string, s?: string, h?: string) => PathMatch;
     navigate?: (p: string, d?: any, r?: boolean) => void;
     update?: () => void;
     onunload?: () => void;
@@ -37,11 +37,11 @@ export interface RouterProps {
     update?: () => void;
 }
 
-function match(path: string, url: string): PathMatch {
+function match(path: string, pathname?: string, search?: string, hash?: string): PathMatch {
     const keys: Key[] = [];
     const tokens = parse(path);
     const pattern = tokensToRegexp(tokens, keys);
-    const match = pattern.exec(url);
+    const match = pattern.exec(pathname);
     if (!match) {
         return {};
     }

@@ -22,10 +22,10 @@ export default function Route({ children, path, error }: RouteProps, ctx: Contex
 
     let routeParams = {};
     let routePath = (ctx.router.path || '') + (path || '');
-    const { pathname } = window.location;
+    const { pathname, search, hash } = window.location;
 
     if (path) {
-        const { match, params, nextPath } = ctx.router.match(routePath, pathname);
+        const { match, params, nextPath } = ctx.router.match(routePath, pathname, search, hash);
 
         if (!match) {
             return null;

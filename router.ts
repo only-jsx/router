@@ -19,6 +19,8 @@ export interface RouterContext {
     firstChild?: Node;
     match?: (p: string, u?: string, s?: string, h?: string) => PathMatch;
     navigate?: (p: string, d?: any, r?: boolean) => void;
+    changeEvent?: string;
+    getCurrentPath?: () => string;
     update?: () => void;
     onunload?: () => void;
 }
@@ -37,10 +39,12 @@ export interface RouterProps {
     update?: () => void;
 }
 
-function match(path: string, pathname?: string, search?: string, hash?: string): PathMatch {
+function match(path: string): PathMatch {
     const keys: Key[] = [];
     const tokens = parse(path);
     const pattern = tokensToRegexp(tokens, keys);
+
+    const { pathname } = window.location;
     const match = pattern.exec(pathname);
     if (!match) {
         return {};
@@ -55,10 +59,16 @@ function match(path: string, pathname?: string, search?: string, hash?: string):
     if (typeof tokens[0] === 'string') {
         nextPath = (tokens[1] as Key)?.prefix ? tokens[0] + (tokens[1] as Key).prefix : tokens[0];
     } else {
-        nextPath = (tokens[0] as Key).prefix || '';
+        nextPath = tokens[0].prefix || '';
     }
 
     return { match, params, nextPath };
+}
+
+const changeEvent = 'popstate';
+
+function getCurrentPath() {
+    return window.location.pathname;
 }
 
 function createFragment(children: RouteChild | RouteChild[], ctx: Context): DocumentFragment | null {
@@ -115,6 +125,14 @@ export default function Router({ children, onupdated, onnavigate }: RouterProps)
         router.match = match;
     }
 
+    if (!router.changeEvent) {
+        router.changeEvent = changeEvent;
+    }
+
+    if (!router.getCurrentPath) {
+        router.getCurrentPath = getCurrentPath;
+    }
+
     function update() {
         router.path = '';
         const parent = router.firstChild.parentNode;
@@ -144,10 +162,10 @@ export default function Router({ children, onupdated, onnavigate }: RouterProps)
         router.navigate = navigate;
     }
 
-    window.addEventListener('popstate', router.update);
+    window.addEventListener(router.changeEvent, router.update);
 
     router.onunload = () => {
-        window.removeEventListener('popstate', router.update);
+        window.removeEventListener(router.changeEvent, router.update);
     }
 
     const fragment = createRouterFragment(children, ctx);

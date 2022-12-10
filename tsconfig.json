@@ -3,11 +3,14 @@
         "outDir": "./dist",
         "declaration": true,
         "module": "ESNext",
-        "target": "es5",
+        "target": "es2015",
+        "lib": [
+            "ES5", "DOM"
+        ],
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
     },
     "include": [
-        "index.ts"
+        "src/index.ts"
     ]
 }

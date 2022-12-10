@@ -1,5 +1,5 @@
 import { tokensToRegexp, parse, Key } from 'path-to-regexp';
-import { getContext } from 'only-jsx/jsx-runtime';
+import { getContext, Options } from 'only-jsx/jsx-runtime';
 
 export interface Params {
     [key: string]: string;
@@ -16,35 +16,43 @@ export interface RouterContext {
     params?: Params;
     matches?: PathMatch[];
     error?: Error;
-    firstChild?: Node;
+    childNodes?: ChildNode[];
     match?: (p: string, u?: string, s?: string, h?: string) => PathMatch;
     navigate?: (p: string, d?: any, r?: boolean) => void;
+    onunload?: () => void;
     changeEvent?: string;
     getCurrentPath?: () => string;
     update?: () => void;
-    onunload?: () => void;
 }
 
 export interface Context {
     router: RouterContext;
 }
 
-type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment | Comment | null | undefined;
-export type RouteChild = HTMLElement | DocumentFragment | Comment | RouteFunc | null | undefined;
+type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment | Comment | null;
+
+export type RouteChild = HTMLElement | DocumentFragment | Comment | RouteFunc | null | undefined; 
 
 export interface RouterProps {
-    children?: RouteChild | RouteChild[];
     onupdated?: () => void;
-    onnavigate?: () => void;
-    update?: () => void;
 }
 
-function match(path: string): PathMatch {
+interface RouterChildren {
+    children?: RouteChild | RouteChild[];
+}
+
+const defChangeEvent = 'popstate';
+
+function defGetCurrentPath() {
+    return window.location.pathname;
+}
+
+function defMatch(path: string): PathMatch {
     const keys: Key[] = [];
     const tokens = parse(path);
     const pattern = tokensToRegexp(tokens, keys);
 
-    const { pathname } = window.location;
+    const pathname = defGetCurrentPath();
     const match = pattern.exec(pathname);
     if (!match) {
         return {};
@@ -65,25 +73,19 @@ function match(path: string): PathMatch {
     return { match, params, nextPath };
 }
 
-const changeEvent = 'popstate';
-
-function getCurrentPath() {
-    return window.location.pathname;
-}
-
 function createFragment(children: RouteChild | RouteChild[], ctx: Context): DocumentFragment | null {
     if (Array.isArray(children)) {
         const fragment = document.createDocumentFragment();
-        const fc = children.map((c: RouteChild) => createFragment(c, ctx));
-        fragment.replaceChildren(...fc.filter(c => !!c));
+        const fc = children.map((c: RouteChild | RouteChild[]) => createFragment(c, ctx));
+        fragment.append(...fc.filter(c => !!c));
         return fragment;
     } else if (typeof children === 'function') {
         return createFragment(children(ctx), ctx);
-    } else if (children instanceof DocumentFragment){
+    } else if (children instanceof DocumentFragment) {
         return children;
     } else if (children) {
         const fragment = document.createDocumentFragment();
-        fragment.replaceChildren(children);
+        fragment.append(children);
         return fragment;
     }
 
@@ -96,60 +98,81 @@ function createRouterFragment(children: RouteChild | RouteChild[], ctx: Context)
         fragment = document.createDocumentFragment();
     }
 
-    if (!fragment.firstChild) {
+    if (!fragment.childNodes.length) {
         fragment.replaceChildren(document.createComment('Router placeholder'));
     }
 
     return fragment;
 }
 
-export default function Router({ children, onupdated, onnavigate }: RouterProps) {
+export default function Router(props: RouterProps | RouterChildren | Options, ctx?: Context) {
+    const context = ctx || getContext()?.ctx;
+
+    if (!context) {
+        throw new Error('Router requires context');
+    }
+
+    if (!(props instanceof Object)) {
+        return null;
+    }
+
+    const { children } = props as RouterChildren;
+
+    let { onupdated } = props as RouterProps;
+
     if (!children) {
         return null;
     }
 
-    const { ctx } = getContext() || {};
-    if (!ctx) {
-        throw new Error('Router requires context');
+    if (!context.router) {
+        context.router = {};
     }
 
-    if (!ctx.router) {
-        ctx.router = {};
-    }
-
-    const { router } = ctx as Context;
+    const { router } = context as Context;
 
     router.path = '';
 
     if (!router.match) {
-        router.match = match;
+        router.match = defMatch;
     }
 
-    if (!router.changeEvent) {
-        router.changeEvent = changeEvent;
-    }
+    const prevPath = { value: '' };
 
-    if (!router.getCurrentPath) {
-        router.getCurrentPath = getCurrentPath;
-    }
+    function defUpdate() {
 
-    function update() {
+        if (!router.childNodes?.length || !router.childNodes[0].parentNode) {
+            //In this case there is no way to find a parent node where insert new elements to
+            //Healthy Router always has at least a comment 'Router placeholder'
+            return;
+        }
+
+        const currentPath = router.getCurrentPath();
+        if (currentPath === prevPath.value) {
+            return;
+        }
+
         router.path = '';
-        const parent = router.firstChild.parentNode;
-        parent.replaceChildren();
-        const c = createRouterFragment(children, ctx);
-        const firstChild = c.firstChild;
-        parent.replaceChildren(c);
-        router.firstChild = firstChild;
+
+        const parent = router.childNodes[0].parentNode;
+
+        const rf = createRouterFragment(children, context);
+
+        const newChildren: ChildNode[] = Array.from(rf.childNodes);
+
+        parent.insertBefore(rf, router.childNodes[0]);
+
+        router.childNodes.forEach((c: any) => c.remove());
+
+        router.childNodes = newChildren;
+        prevPath.value = currentPath;
         onupdated?.();
     }
 
     if (!router.update) {
-        router.update = update;
+        router.update = defUpdate;
     }
 
-    function navigate(path: string, data: any, replace: boolean) {
-        onnavigate?.();
+    function defNavigate(path: string, data: any, replace: boolean) {
         if (replace) {
             history.replaceState(data, '', path);
         } else {
@@ -159,7 +182,15 @@ export default function Router({ children, onupdated, onnavigate }: RouterProps)
     }
 
     if (!router.navigate) {
-        router.navigate = navigate;
+        router.navigate = defNavigate;
+    }
+
+    if (!router.changeEvent) {
+        router.changeEvent = defChangeEvent;
+    }
+
+    if (!router.getCurrentPath) {
+        router.getCurrentPath = defGetCurrentPath;
     }
 
     window.addEventListener(router.changeEvent, router.update);
@@ -170,7 +201,7 @@ export default function Router({ children, onupdated, onnavigate }: RouterProps)
 
     const fragment = createRouterFragment(children, ctx);
 
-    router.firstChild = fragment.firstChild;
+    router.childNodes = Array.from(fragment.childNodes);
 
     return fragment;
 }

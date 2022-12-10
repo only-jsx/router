@@ -3,26 +3,41 @@ import Router, { Context } from './router';
 import { setContext } from 'only-jsx/jsx-runtime';
 
 describe('Test Router component', () => {
+    const element = document.createElement('div');
+
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     test('empty', () => {
-        const r = Router({});
+        const ctx: Context = { router: {} };
+        const r = Router({}, ctx);
+        expect(r).toBeNull();
+    });
+
+    test('without props', () => {
+        const ctx: Context = { router: {} };
+        const r = Router(undefined, ctx);
+        expect(r).toBeNull();
+    });
+
+    test('with primitive props', () => {
+        const ctx: Context = { router: {} };
+        const r = Router('test', ctx);
         expect(r).toBeNull();
     });
 
     test('without context', () => {
         const ctx = undefined as unknown as Context;
         setContext(Router, ctx);
-        const children = ()=>null;
+        const children = () => null;
         expect(() => Router({ children })).toThrowError('Router requires context');
     });
 
     test('without router in context and without children', () => {
-        const ctx: Context = { } as unknown as Context;
+        const ctx: Context = {} as unknown as Context;
         setContext(Router, ctx);
-        const children = ()=>null;
+        const children = () => null;
         const onupdated = jest.fn(() => { });
         const r = Router({ children, onupdated });
 
@@ -42,37 +57,53 @@ describe('Test Router component', () => {
         expect(onupdated.mock.calls.length).toBe(1);
     });
 
-    test('with child', () => {
+    test('with child function', () => {
         const ctx: Context = { router: {} };
-        setContext(Router, ctx);
         const element = document.createElement('div');
-        const children = ()=>{
+        const children = () => {
             const fragment = document.createDocumentFragment();
-            fragment.replaceChildren(element);
+            fragment.replaceChildren(element.cloneNode());
             return fragment;
         }
-        const r = Router({ children });
+        const onupdated = jest.fn(() => { });
+        const r = Router({ children, onupdated }, ctx);
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element);
-        expect(r?.lastChild).toBe(element);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toBe(r?.firstChild);
+
+        ctx.router.getCurrentPath = () => '/path';
+        window.dispatchEvent(new Event('popstate'));
+
+        expect(onupdated).toHaveBeenCalled();
+        ctx.router.onunload?.();
     });
 
     test('with children', () => {
         const ctx: Context = { router: {} };
         setContext(Router, ctx);
-        const element1 = document.createElement('div');
-        const element2 = document.createElement('div');
-        const r = Router({ children: [element1, element2] });
+        const children = [
+            () => document.createElement('div'),
+            () => document.createElement('div')
+        ]
+
+        const r = Router({ children });
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element1);
-        expect(r?.lastChild).toBe(element2);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toStrictEqual(element);
+        expect(r?.lastChild).not.toBe(r?.firstChild);
 
-        const r2 = Router({ children: [element1, undefined, null] });
+        ctx.router.onunload?.();
+
+        const children2 = [() => document.createElement('div'), undefined, null];
+        const r2 = Router({ children: children2 });
+
         expect(r2 instanceof DocumentFragment).toBeTruthy();
-        expect(r2?.firstChild).toStrictEqual(element1);
+        expect(r2?.firstChild).toStrictEqual(element);
         expect(r2?.lastChild).toBe(r2?.firstChild);
+
+        ctx.router.onunload?.();
     });
 
     test('with match, navigate, changeEvent and getCurrentPath props', () => {
@@ -81,17 +112,18 @@ describe('Test Router component', () => {
         const changeEvent = 'testchange';
         const getCurrentPath = () => window.location.hash;
         const update = jest.fn(() => { });
-        const element1 = document.createElement('div');
-        const element2 = document.createElement('div');
+        const children = [
+            () => document.createElement('div'),
+            () => document.createElement('div')
+        ]
 
-        const ctx: Context = { router: { match, navigate, update, changeEvent, getCurrentPath} };
-        setContext(Router, ctx);
-
-        const r = Router({ children: [element1, element2] });
+        const ctx: Context = { router: { match, navigate, changeEvent, getCurrentPath, update } };
+        const r = Router({ children }, ctx);
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element1);
-        expect(r?.lastChild).toBe(element2);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toStrictEqual(element);
+        expect(r?.lastChild).not.toBe(r?.firstChild);
 
         const prev = getCurrentPath();
         expect(prev).not.toBe('/path');
@@ -102,19 +134,24 @@ describe('Test Router component', () => {
 
         window.dispatchEvent(new Event(changeEvent));
         expect(update).toHaveBeenCalledTimes(1);
+
+        ctx.router.onunload?.();
     });
 
     test('default match', () => {
         const ctx: Context = { router: {} };
         setContext(Router, ctx);
+        const children = [
+            () => document.createElement('div'),
+            () => document.createElement('div')
+        ]
 
-        const element1 = document.createElement('div');
-        const element2 = document.createElement('div');
-        const r = Router({ children: [element1, element2] });
+        const r = Router({ children });
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element1);
-        expect(r?.lastChild).toBe(element2);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toStrictEqual(element);
+        expect(r?.lastChild).not.toBe(r?.firstChild);
 
         ctx.router.navigate?.('/wrong');
         const m1 = ctx.router.match?.('/path');
@@ -136,6 +173,8 @@ describe('Test Router component', () => {
         testMatch('/child/', '/:child', ['/child/', 'child'], { child: 'child' }, '/');
         testMatch('/child', '/:child', ['/child', 'child'], { child: 'child' }, '/');
         testMatch('/child', '(/child)', ['/child', '/child'], { 0: '/child' }, '');
+
+        ctx.router.onunload?.();
     });
 
     test('default navigate with context update', () => {
@@ -143,55 +182,79 @@ describe('Test Router component', () => {
         const ctx: Context = { router: { update } };
         setContext(Router, ctx);
 
-        const element = document.createElement('div');
-        const r = Router({ children: element });
+        const children = () => document.createElement('div');
+        const r = Router({ children });
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element);
-        expect(r?.lastChild).toBe(element);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toBe(r?.firstChild);
 
         const prev = window.location.pathname;
         expect(prev).not.toBe('/path');
         ctx.router.navigate?.('/path');
-        //expect(history.length).toBe(1);
         expect(update).toHaveBeenCalled();
         expect(window.location.pathname).toBe('/path');
 
         const data1 = {};
         ctx.router.navigate?.('/path', data1, true);
-        //expect(history.length).toBe(2);
 
         const data2 = {};
         ctx.router.navigate?.('/path', data2, false);
         expect(history.state).toBe(data2);
-        //expect(history.length).toBe(3);
 
         expect(window.location.pathname).toBe('/path');
+
+        ctx.router.onunload?.();
     });
 
-    test('with props onupdated and onnavigate', () => {
+    test('with props onupdated', () => {
         const onupdated = jest.fn(() => { });
-        const onnavigate = jest.fn(() => { });
 
         const ctx: Context = { router: {} };
-        setContext(Router, ctx);
-
-        const element = document.createElement('div');
-        const r = Router({ children: element, onupdated, onnavigate });
+        const children = () => document.createElement('div');
+        const r = Router({ children, onupdated }, ctx);
 
         expect(r instanceof DocumentFragment).toBeTruthy();
-        expect(r?.firstChild).toBe(element);
-        expect(r?.lastChild).toBe(element);
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toBe(r?.firstChild);
 
         const data = {};
         ctx.router.navigate?.('/path', data, false);
-        expect(onnavigate).toHaveBeenCalled();
-        expect(onupdated).toHaveBeenCalled();
+        expect(onupdated).toBeCalledTimes(1);
 
+        ctx.router.getCurrentPath = () => '';
         window.dispatchEvent(new Event('popstate'));
+        expect(onupdated.mock.calls.length).toBe(2);
 
         ctx.router.onunload?.();
+    });
 
-        expect(onupdated.mock.calls.length).toBe(2);
+    test('with context without childNodes', () => {
+        const onupdated = jest.fn(() => { });
+
+        const ctx: Context = { router: {} };
+        const children = () => document.createElement('div');
+        const r = Router({ children }, ctx);
+
+        expect(r instanceof DocumentFragment).toBeTruthy();
+        expect(r?.firstChild).toStrictEqual(element);
+        expect(r?.lastChild).toBe(r?.firstChild);
+
+        ctx.router.getCurrentPath = () => '';
+        delete ctx.router.childNodes;
+        window.dispatchEvent(new Event('popstate'));
+        expect(onupdated.mock.calls.length).toBe(0);
+        ctx.router.onunload?.();
+    });
+
+    test('onunload removes listener', () => {
+        const ctx: Context = { router: {} };
+        const children = () => null;
+        const r = Router({ children }, ctx);
+
+        const spy = jest.spyOn(window, 'removeEventListener');
+        ctx.router.onunload?.();
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
     });
 });

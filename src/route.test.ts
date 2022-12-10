@@ -6,7 +6,7 @@ import Router, { Context, Params } from './router';
 describe('Test Route component', () => {
     const routerCtx: Context = { router: {} };
     setContext(Router, routerCtx);
-    Router({ children: document.createComment('Router')});
+    Router({ children: ()=>document.createComment('Router')});
 
     const navigate = routerCtx.router.navigate;
     const match = routerCtx.router.match;

@@ -46,13 +46,9 @@ const App = ({ props }: { props: AppProps }): DocumentFragment => {
         </Route>
     </Router>
 
-    ctx.router.onnavigate = ()=>{
+    props.onunload = ()=>{
         state.onunload?.();
         state.onunload = undefined;
-    }
-
-    props.onunload = ()=>{
-        ctx.router.onnavigate();
         ctx.router.onunload?.();
     };
     return r;

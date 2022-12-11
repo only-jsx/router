@@ -1,5 +1,5 @@
 import { tokensToRegexp, parse, Key } from 'path-to-regexp';
-import { getContext, Options } from 'only-jsx/jsx-runtime';
+import { getContext, Options, JsxNode } from 'only-jsx/jsx-runtime';
 
 export interface Params {
     [key: string]: string;
@@ -29,9 +29,9 @@ export interface Context {
     router: RouterContext;
 }
 
-type RouteFunc = (ctx: Context) => HTMLElement | DocumentFragment | Comment | null;
+type RouteFunc = (ctx: Context) => JsxNode;
 
-export type RouteChild = HTMLElement | DocumentFragment | Comment | RouteFunc | null | undefined; 
+export type RouteChild = RouteFunc | JsxNode;
 
 export interface RouterProps {
     onupdated?: () => void;
@@ -83,9 +83,13 @@ function createFragment(children: RouteChild | RouteChild[], ctx: Context): Docu
         return createFragment(children(ctx), ctx);
     } else if (children instanceof DocumentFragment) {
         return children;
-    } else if (children) {
+    } else if (children != null) {
         const fragment = document.createDocumentFragment();
-        fragment.append(children);
+        if (children instanceof Node) {
+            fragment.append(children);
+        } else {
+            fragment.append('' + children);
+        }
         return fragment;
     }
 

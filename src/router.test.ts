@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import Router, { Context } from './router';
-import { setContext } from 'only-jsx/jsx-runtime';
+import { Options, setContext } from 'only-jsx/jsx-runtime';
 
 describe('Test Router component', () => {
     const element = document.createElement('div');
@@ -17,14 +17,34 @@ describe('Test Router component', () => {
 
     test('without props', () => {
         const ctx: Context = { router: {} };
-        const r = Router(undefined, ctx);
+        const r = Router(undefined as unknown as Options, ctx);
         expect(r).toBeNull();
     });
 
     test('with primitive props', () => {
         const ctx: Context = { router: {} };
-        const r = Router('test', ctx);
+        const r = Router('test' as unknown as Options, ctx);
         expect(r).toBeNull();
+    });
+
+    test('with undefined children', () => {
+        const ctx: Context = { router: {} };
+        const children = () => undefined;
+        const r = Router({children}, ctx);
+        expect(r instanceof DocumentFragment).toBeTruthy();
+        expect(r?.firstChild instanceof Comment).toBeTruthy();
+        expect(r?.firstChild?.textContent).toBe('Router placeholder');
+        expect(r?.lastChild).toBe(r?.firstChild);
+    });
+
+    test('with primitive children', () => {
+        const ctx: Context = { router: {} };
+        const children = () => 'test';
+        const r = Router({children}, ctx);
+        expect(r instanceof DocumentFragment).toBeTruthy();
+        expect(r?.firstChild instanceof Text).toBeTruthy();
+        expect(r?.firstChild?.textContent).toBe('test');
+        expect(r?.lastChild).toBe(r?.firstChild);
     });
 
     test('without context', () => {

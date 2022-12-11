@@ -24,6 +24,20 @@ describe('Test Route component', () => {
         expect(r).toBe(undefined);
     });
 
+    test('with primitive props', () => {
+        const ctx: Context = { router: {} };
+        const children = 'element1';
+        const r = Route({ children }, ctx);
+        expect(r).toBe('element1');
+    });
+
+    test('with primitive children', () => {
+        const ctx: Context = { router: {} };
+        const children = ['element1', 1, null, undefined];
+        const r = Route({ children }, ctx);
+        expect(r).toStrictEqual(children);
+    });
+
     test('empty', () => {
         const ctx: Context = { router: {} };
         const element1 = document.createElement('div');

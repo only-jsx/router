@@ -1,3 +1,4 @@
+import { Options } from 'only-jsx';
 import { Context, RouteChild } from './router';
 
 export interface RouteProps {
@@ -6,7 +7,7 @@ export interface RouteProps {
     error?: (ctx: Context) => RouteChild | RouteChild[];
 }
 
-function routeChildren(children: RouteChild | RouteChild[], ctx: Context): RouteChild | RouteChild[] {
+function routeChildren(children: RouteChild | RouteChild[] | Options, ctx: Context): RouteChild | RouteChild[] | Options {
     if (typeof children === 'function') {
         return routeChildren(children(ctx), ctx);
     } else if (Array.isArray(children)) {

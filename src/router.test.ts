@@ -86,7 +86,8 @@ describe('Test Router component', () => {
             return fragment;
         }
         const onupdated = jest.fn(() => { });
-        const r = Router({ children, onupdated }, ctx);
+        const onbeforeupdate = jest.fn(() => { });
+        const r = Router({ children, onupdated, onbeforeupdate }, ctx);
 
         expect(r instanceof DocumentFragment).toBeTruthy();
         expect(r?.firstChild).toStrictEqual(element);
@@ -95,6 +96,7 @@ describe('Test Router component', () => {
         ctx.router.getCurrentPath = () => '/path';
         window.dispatchEvent(new Event('popstate'));
 
+        expect(onbeforeupdate).toHaveBeenCalled();
         expect(onupdated).toHaveBeenCalled();
         ctx.router.onunload?.();
     });
@@ -219,6 +221,8 @@ describe('Test Router component', () => {
         ctx.router.navigate?.('/path', data1, true);
 
         const data2 = {};
+        //test without update
+        delete ctx.router.update;
         ctx.router.navigate?.('/path', data2, false);
         expect(history.state).toBe(data2);
 

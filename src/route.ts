@@ -1,5 +1,5 @@
 import { Options } from 'only-jsx';
-import { Context, RouteChild } from './router';
+import { Context, Params, RouteChild } from './router';
 
 export interface RouteProps {
     children?: RouteChild | RouteChild[];
@@ -21,11 +21,17 @@ export default function Route({ children, path, error }: RouteProps, ctx: Contex
         throw new Error('Routes are not allowed outside the Router component');
     }
 
-    let routeParams = {};
-    let routePath = (ctx.router.path || '') + (path || '');
+    let routeParams: Params | undefined = {};
+    let routePath: string | undefined = (ctx.router.path || '') + (path || '');
 
     if (path) {
-        const { match, params, nextPath } = ctx.router.match(routePath);
+        const routerMatch = ctx.router.match?.(routePath);
+
+        if (!routerMatch) {
+            return null;
+        }
+
+        const { match, params, nextPath } = routerMatch;
 
         if (!match) {
             return null;

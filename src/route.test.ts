@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import { setContext } from 'only-jsx/jsx-runtime';
 import Route from './route';
-import Router, { Context, Params } from './router';
+import Router, { Context, Params, PathMatch } from './router';
 
 describe('Test Route component', () => {
     const routerCtx: Context = { router: {} };
@@ -61,6 +61,13 @@ describe('Test Route component', () => {
         const element2 = document.createElement('div');
         const r = Route({ children: [element1, element2] }, ctx);
         expect(r).toBeNull();
+    });
+
+    test('correct path context without match', () => {
+        const ctx: Context = { router: { path: '/parent', navigate } };
+        const children = 'element1';
+        const r = Route({ children, path: '/child' }, ctx);
+        expect(r).toBe(null);
     });
 
     const testParentParameters = (name: string, params?: Params) =>

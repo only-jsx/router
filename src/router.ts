@@ -35,6 +35,7 @@ export type RouteChild = RouteFunc | JsxNode;
 
 export interface RouterProps {
     onupdated?: () => void;
+    onbeforeupdate?: () => void;
 }
 
 interface RouterChildren {
@@ -77,7 +78,7 @@ function createFragment(children: RouteChild | RouteChild[], ctx: Context): Docu
     if (Array.isArray(children)) {
         const fragment = document.createDocumentFragment();
         const fc = children.map((c: RouteChild | RouteChild[]) => createFragment(c, ctx));
-        fragment.append(...fc.filter(c => !!c));
+        fragment.append(...(fc.filter(c => !!c) as DocumentFragment[]));
         return fragment;
     } else if (typeof children === 'function') {
         return createFragment(children(ctx), ctx);
@@ -122,7 +123,7 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
 
     const { children } = props as RouterChildren;
 
-    let { onupdated } = props as RouterProps;
+    let { onupdated, onbeforeupdate } = props as RouterProps;
 
     if (!children) {
         return null;
@@ -140,6 +141,10 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.match = defMatch;
     }
 
+    if (!router.getCurrentPath) {
+        router.getCurrentPath = defGetCurrentPath;
+    }
+
     const prevPath = { value: '' };
 
     function defUpdate() {
@@ -151,9 +156,12 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         }
 
         const currentPath = router.getCurrentPath();
-        if (currentPath === prevPath.value) {
+
+        if (currentPath === undefined || currentPath === prevPath.value) {
             return;
         }
+
+        onbeforeupdate?.();
 
         router.path = '';
 
@@ -168,7 +176,9 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.childNodes.forEach((c: any) => c.remove());
 
         router.childNodes = newChildren;
+
         prevPath.value = currentPath;
+
         onupdated?.();
     }
 
@@ -176,13 +186,13 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.update = defUpdate;
     }
 
-    function defNavigate(path: string, data: any, replace: boolean) {
+    function defNavigate(path: string, data: any, replace?: boolean) {
         if (replace) {
             history.replaceState(data, '', path);
         } else {
             history.pushState(data, '', path);
         }
-        router.update();
+        router.update?.();
     }
 
     if (!router.navigate) {
@@ -193,17 +203,18 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.changeEvent = defChangeEvent;
     }
 
-    if (!router.getCurrentPath) {
-        router.getCurrentPath = defGetCurrentPath;
+    if (router.changeEvent && router.update) {
+        const eventHandler = () => router.update();
+        window.addEventListener(router.changeEvent, eventHandler);
+
+        router.onunload = () => {
+            if (router.changeEvent) {
+                window.removeEventListener(router.changeEvent, eventHandler);
+            }
+        }
     }
 
-    window.addEventListener(router.changeEvent, router.update);
-
-    router.onunload = () => {
-        window.removeEventListener(router.changeEvent, router.update);
-    }
-
-    const fragment = createRouterFragment(children, ctx);
+    const fragment = createRouterFragment(children, context);
 
     router.childNodes = Array.from(fragment.childNodes);
 

@@ -11,7 +11,7 @@ function routeChildren(children: RouteChild | RouteChild[] | Options, ctx: Conte
     if (typeof children === 'function') {
         return routeChildren(children(ctx), ctx);
     } else if (Array.isArray(children)) {
-        return children.map(c => routeChildren(c, ctx) as RouteChild)
+        return children.map(c => routeChildren(c, ctx))
     }
     return children;
 }

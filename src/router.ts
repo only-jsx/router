@@ -15,7 +15,7 @@ export interface RouterContext {
     path?: string;
     params?: Params;
     matches?: PathMatch[];
-    error?: Error;
+    error?: unknown;
     childNodes?: ChildNode[];
     match?: (p: string, u?: string, s?: string, h?: string) => PathMatch;
     navigate?: (p: string, d?: any, r?: boolean) => void;
@@ -155,7 +155,7 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
             return;
         }
 
-        const currentPath = router.getCurrentPath();
+        const currentPath = router.getCurrentPath?.();
 
         if (currentPath === undefined || currentPath === prevPath.value) {
             return;
@@ -203,8 +203,8 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.changeEvent = defChangeEvent;
     }
 
-    if (router.changeEvent && router.update) {
-        const eventHandler = () => router.update();
+    if (router.changeEvent) {
+        const eventHandler = () => router.update?.();
         window.addEventListener(router.changeEvent, eventHandler);
 
         router.onunload = () => {

@@ -77,6 +77,46 @@ describe('Test Router component', () => {
         expect(onupdated.mock.calls.length).toBe(1);
     });
 
+    test('without update and getCurrentPath', () => {
+        const ctx: Context = {} as unknown as Context;
+        setContext(Router, ctx);
+        const children = () => null;
+        const onupdated = jest.fn(() => { });
+        const r = Router({ children, onupdated });
+
+        expect(r instanceof DocumentFragment).toBeTruthy();
+        expect(r?.firstChild instanceof Comment).toBeTruthy();
+        expect(r?.lastChild).toBe(r?.firstChild);
+        expect(r?.firstChild?.textContent).toBe('Router placeholder');
+
+        expect(onupdated).not.toHaveBeenCalled();
+
+        const prevGetCurrentPath = ctx.router.getCurrentPath;
+        delete ctx.router.getCurrentPath;
+        ctx.router.navigate?.('/1');
+
+        expect(onupdated).not.toHaveBeenCalled();
+
+        ctx.router.getCurrentPath = prevGetCurrentPath;
+
+        const prevUpdate = ctx.router.update;
+        delete ctx.router.update;
+
+        ctx.router.navigate?.('/2');
+        window.dispatchEvent(new Event('popstate'));
+
+        expect(onupdated).not.toHaveBeenCalled();
+
+        ctx.router.update = prevUpdate;
+
+        ctx.router.navigate?.('/3');
+        expect(onupdated).toHaveBeenCalled();
+
+        ctx.router.onunload?.();
+
+        expect(onupdated.mock.calls.length).toBe(1);
+    });
+
     test('with child function', () => {
         const ctx: Context = { router: {} };
         const element = document.createElement('div');

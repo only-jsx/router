@@ -12,7 +12,7 @@
     "author": "only-jsx",
     "license": "MIT",
     "dependencies": {
-        "only-jsx": "^0.1.0",
+        "only-jsx": "^0.1.1",
         "path-to-regexp": "^6.2.1"
     },
     "devDependencies": {

@@ -54,14 +54,14 @@ Our examples also demonstrate how to implement URL hash routing.
 ### Simple
 ```tsx
 const App = () => <Router>
-    <Route path="/(.*)">
+    <Route path="/*wildcard">
         <Route path="path1">{child1}</Route>
         {/* "path2/:param" and "path2/(.*)" are overlapped, both are rendered */}
         {/* this component has params.param === ...rest of path... */}
         <Route path="path2/:param">{child21}</Route>
         {/* this component has params[0] === ...rest of path... */}
-        <Route path="path2/(.*)">{child22}</Route>
-        <Route path="path3/(.*)">{child3}</Route>
+        <Route path="path2/*child">{child22}</Route>
+        <Route path="path3/*child">{child3}</Route>
         {/* this is a fallback route */}
         <Route>{fallback}</Route>
     </Route>
@@ -88,28 +88,32 @@ const App = ({ props }: { props: AppProps }): DocumentFragment => {
     const state: UnloadState = {};
 
     let r = <Router>
-        {/*Regular expressions in path*/}
-        <Route path="/router/(.*)">
+        {/* Regular expressions in path with wildcard */}
+        <Route path="/router/*wildcard">
             <Layout />
-            {/*Part of a parent route path before any named parameter or regexp*/}
-            {/*becames a prefix for a child route*/}
-            {/*so this actually matches to /router/home*/}
-            <Route path="home"><Home /></Route>
-            <Route path="await"><AwaitPage state={state}/></Route>
-            <Route path="long-load"><LongLoad state={state}/></Route>
-            <Route path="todos" error={ErrorBoundary}>
-                <TodosList state={state}/>
+            {/* Part of a parent route path before any named parameter or wildcard */}
+            {/* becames a prefix for a child route */}
+            {/* so this actually matches to /router/home */}
+            <Route path="home">
+                <RoutedSpan>RoutedSpan</RoutedSpan>
+                <LinkButton>LinkButton</LinkButton>
+                <Link to="/hello/world">Link</Link>
             </Route>
-            <Route path="todos/(.*)" error={ErrorBoundary}>
+            <Route path="await{/:optional}/status"><AwaitPage/></Route>
+            <Route path="long-load"><LongLoad/></Route>
+            <Route path="todos" error={ErrorBoundary}>
+                <TodosList/>
+            </Route>
+            <Route path="todos/*todo" error={ErrorBoundary}>
                 <h5>Todo</h5>
-                {/*Named parameters*/}
-                <Route path=":id"><Todo state={state}/></Route>
+                {/* Named parameters */}
+                <Route path=":id"><Todo/></Route>
             </Route>
             <Route path="error" error={ErrorBoundary}><ErrorComponent/></Route>
-            {/*Route without a path is a fallback route*/}
+            {/* Route without a path is a fallback route */}
             <Route><Fallback /></Route>
         </Route>
-    </Router>
+    </Router>;
 
     props.onunload = ()=>{
         state.onunload?.();

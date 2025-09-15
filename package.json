@@ -1,6 +1,6 @@
 {
     "name": "only-jsx-router",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Declarative browser routing for only-jsx runtime",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -12,15 +12,15 @@
     "author": "only-jsx",
     "license": "MIT",
     "dependencies": {
-        "only-jsx": "^0.1.3",
-        "path-to-regexp": "^6.2.1"
+        "only-jsx": "^0.1.4",
+        "path-to-regexp": "^8.3.0"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.4",
-        "jest": "^29.6.4",
-        "jest-environment-jsdom": "^29.6.4",
-        "ts-jest": "^29.1.1",
-        "typescript": "^5.2.2"
+        "@types/jest": "^30.0.0",
+        "jest": "^30.1.1",
+        "jest-environment-jsdom": "^30.1.1",
+        "ts-jest": "^29.4.1",
+        "typescript": "^5.9.2"
     },
     "repository": {
         "type": "git",

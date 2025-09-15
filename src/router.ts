@@ -1,5 +1,6 @@
-import { tokensToRegexp, parse, Key } from 'path-to-regexp';
-import { getContext, Options, JsxNode } from 'only-jsx/jsx-runtime';
+import { pathToRegexp, parse } from 'path-to-regexp';
+import { getContext } from 'only-jsx/jsx-runtime';
+import type { Options, JsxNode } from 'only-jsx/jsx-runtime';
 
 export interface Params {
     [key: string]: string;
@@ -49,27 +50,26 @@ function defGetCurrentPath() {
 }
 
 function defMatch(path: string): PathMatch {
-    const keys: Key[] = [];
-    const tokens = parse(path);
-    const pattern = tokensToRegexp(tokens, keys);
+    const { tokens } = parse(path);
+    const { regexp, keys } = pathToRegexp(path);
 
     const pathname = defGetCurrentPath();
-    const match = pattern.exec(pathname);
+
+    const match = regexp.exec(pathname);
+
     if (!match) {
         return {};
     }
 
     const params: Params = {};
-    for (let i = 1; i < match.length; i++) {
-        params[keys[i - 1]['name']] = match[i];
+
+    for (let i = 0; i < keys.length; i++) {
+        if (keys[i].type === 'param' && match[i + 1]) {
+            params[keys[i].name] = match[i + 1];
+        }
     }
 
-    let nextPath = '';
-    if (typeof tokens[0] === 'string') {
-        nextPath = (tokens[1] as Key)?.prefix ? tokens[0] + (tokens[1] as Key).prefix : tokens[0];
-    } else {
-        nextPath = tokens[0].prefix || '';
-    }
+    const nextPath = tokens[0].type === 'text' ? tokens[0].value : '';
 
     return { match, params, nextPath };
 }
@@ -203,15 +203,12 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.changeEvent = defChangeEvent;
     }
 
-    if (router.changeEvent) {
-        const eventHandler = () => router.update?.();
-        window.addEventListener(router.changeEvent, eventHandler);
+    const eventHandler = () => router.update?.();
+    
+    window.addEventListener(router.changeEvent, eventHandler);
 
-        router.onunload = () => {
-            if (router.changeEvent) {
-                window.removeEventListener(router.changeEvent, eventHandler);
-            }
-        }
+    router.onunload = () => {
+        window.removeEventListener(router.changeEvent!, eventHandler);
     }
 
     const fragment = createRouterFragment(children, context);

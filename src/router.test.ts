@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import Router, { Context } from './router';
-import { Options, setContext } from 'only-jsx/jsx-runtime';
+import Router, { type Context } from './router';
+import { type Options, setContext } from 'only-jsx/jsx-runtime';
 
 describe('Test Router component', () => {
     const element = document.createElement('div');
@@ -30,7 +30,7 @@ describe('Test Router component', () => {
     test('with undefined children', () => {
         const ctx: Context = { router: {} };
         const children = () => undefined;
-        const r = Router({children}, ctx);
+        const r = Router({ children }, ctx);
         expect(r instanceof DocumentFragment).toBeTruthy();
         expect(r?.firstChild instanceof Comment).toBeTruthy();
         expect(r?.firstChild?.textContent).toBe('Router placeholder');
@@ -40,7 +40,7 @@ describe('Test Router component', () => {
     test('with primitive children', () => {
         const ctx: Context = { router: {} };
         const children = () => 'test';
-        const r = Router({children}, ctx);
+        const r = Router({ children }, ctx);
         expect(r instanceof DocumentFragment).toBeTruthy();
         expect(r?.firstChild instanceof Text).toBeTruthy();
         expect(r?.firstChild?.textContent).toBe('test');
@@ -51,7 +51,7 @@ describe('Test Router component', () => {
         const ctx = undefined as unknown as Context;
         setContext(Router, ctx);
         const children = () => null;
-        expect(() => Router({ children })).toThrowError('Router requires context');
+        expect(() => Router({ children })).toThrow('Router requires context');
     });
 
     test('without router in context and without children', () => {
@@ -219,7 +219,7 @@ describe('Test Router component', () => {
         const m1 = ctx.router.match?.('/path');
         expect(m1).toStrictEqual({});
 
-        const testMatch = (navigated: string, path: string, mr: string[], params: object, nextPath: string) => {
+        const testMatch = (navigated: string, path: string, mr: (string | undefined)[], params: object, nextPath: string) => {
             ctx.router.navigate?.(navigated);
             const m = ctx.router.match?.(path);
             const match = [...mr] as any;
@@ -232,9 +232,12 @@ describe('Test Router component', () => {
 
         testMatch('/path/1', '/path/:id', ['/path/1', '1'], { id: '1' }, '/path/');
         testMatch('/path/1/2', '/path/1/:id', ['/path/1/2', '2'], { id: '2' }, '/path/1/');
+        testMatch('/path/1/2', '/path{/1}/:id', ['/path/1/2', '2'], { id: '2' }, '/path');
+        testMatch('/path/1/2/3/4', '/path/*wildcard/4', ['/path/1/2/3/4', '1/2/3'], {}, '/path/');
+        testMatch('/path/2', '/path/{optional/}:id', ['/path/2', , '2'], { id: '2' }, '/path/');
         testMatch('/child/', '/:child', ['/child/', 'child'], { child: 'child' }, '/');
         testMatch('/child', '/:child', ['/child', 'child'], { child: 'child' }, '/');
-        testMatch('/child', '(/child)', ['/child', '/child'], { 0: '/child' }, '');
+        testMatch('/child', '*child', ['/child', '/child'], {}, '');
 
         ctx.router.onunload?.();
     });
@@ -284,7 +287,7 @@ describe('Test Router component', () => {
 
         const data = {};
         ctx.router.navigate?.('/path', data, false);
-        expect(onupdated).toBeCalledTimes(1);
+        expect(onupdated).toHaveBeenCalledTimes(1);
 
         ctx.router.getCurrentPath = () => '';
         window.dispatchEvent(new Event('popstate'));

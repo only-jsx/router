@@ -1,21 +1,21 @@
 import { describe, expect, test } from '@jest/globals';
 import { setContext } from 'only-jsx/jsx-runtime';
 import Route from './route';
-import Router, { Context, Params, PathMatch } from './router';
+import Router, { type Context, type Params } from './router';
 
 describe('Test Route component', () => {
     const routerCtx: Context = { router: {} };
     setContext(Router, routerCtx);
-    Router({ children: ()=>document.createComment('Router')});
+    Router({ children: () => document.createComment('Router') });
 
     const navigate = routerCtx.router.navigate;
     const match = routerCtx.router.match;
 
     test('without Router', () => {
         const element = document.createElement('div');
-        expect(() => Route({ children: element }, {} as Context)).toThrowError('Routes are not allowed outside the Router component');
+        expect(() => Route({ children: element }, {} as Context)).toThrow('Routes are not allowed outside the Router component');
 
-        expect(() => Route({ children: element }, undefined as unknown as Context)).toThrowError('Routes are not allowed outside the Router component');
+        expect(() => Route({ children: element }, undefined as unknown as Context)).toThrow('Routes are not allowed outside the Router component');
     });
 
     test('without children', () => {
@@ -145,9 +145,10 @@ describe('Test Route component', () => {
         };
 
         testPathHandle('/parent1/parent2/child/', '/par\\ent1/parent2/', ':child/', '/parent1/parent2/', { child: 'child' });
-        testPathHandle('/child1/child2/index.html', '/child1/', 'child2/(in)(.*).html', '/child1/child2/', { 0: 'in', 1: 'dex' });
-        testPathHandle('/child1/child2/index.html', '', '/child1/:c1/(inde)(.*).html', '/child1/', { c1: 'child2', '0': 'inde', '1': 'x' });
-        testPathHandle('/child1/child2', '/child1/', '(child2)', '/child1/', { 0: 'child2' });
+        testPathHandle('/child1/child2/index.html', '/child1/', 'child2/*html', '/child1/child2/', {});
+        testPathHandle('/child1/index.html', '/child1/', '{child2/}:html', '/child1/', { html: 'index.html' });
+        testPathHandle('/child1/child2/index.html', '', '/child1/:c1/:index', '/child1/', { c1: 'child2', index: 'index.html' });
+        testPathHandle('/child1/child2', '/child1/', '*child2', '/child1/', {});
         testPathHandle('/child1/child2/', '/child1/', 'child2/', '/child1/child2/', {});
         testPathHandle('/child1/', '', '/:child1', '/', { child1: 'child1' });
     });

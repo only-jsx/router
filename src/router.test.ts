@@ -200,6 +200,53 @@ describe('Test Router component', () => {
         ctx.router.onunload?.();
     });
 
+    test('without changeEvent', () => {
+        const update = jest.fn(() => { });
+        const children = [
+            () => document.createElement('div'),
+            () => document.createElement('div')
+        ]
+
+        const ctx1: Context = { router: { changeEvent: null, update } };
+        const r1 = Router({ children }, ctx1);
+
+        expect(r1 instanceof DocumentFragment).toBeTruthy();
+        expect(r1?.firstChild).toStrictEqual(element);
+        expect(r1?.lastChild).toStrictEqual(element);
+        expect(r1?.lastChild).not.toBe(r1?.firstChild);
+
+        window.dispatchEvent(new Event('popstate'));
+        expect(update).toHaveBeenCalledTimes(0);
+
+        ctx1.router.onunload?.();
+
+        const ctx2: Context = { router: { changeEvent: '', update } };
+        const r2 = Router({ children }, ctx2);
+
+        expect(r2 instanceof DocumentFragment).toBeTruthy();
+        expect(r2?.firstChild).toStrictEqual(element);
+        expect(r2?.lastChild).toStrictEqual(element);
+        expect(r2?.lastChild).not.toBe(r2?.firstChild);
+
+        window.dispatchEvent(new Event('popstate'));
+        expect(update).toHaveBeenCalledTimes(0);
+
+        ctx2.router.onunload?.();
+
+        const ctx3: Context = { router: { update } };
+        const r3 = Router({ children }, ctx3);
+
+        expect(r3 instanceof DocumentFragment).toBeTruthy();
+        expect(r3?.firstChild).toStrictEqual(element);
+        expect(r3?.lastChild).toStrictEqual(element);
+        expect(r3?.lastChild).not.toBe(r3?.firstChild);
+
+        window.dispatchEvent(new Event('popstate'));
+        expect(update).toHaveBeenCalledTimes(1);
+
+        ctx3.router.onunload?.();
+    });
+
     test('default match', () => {
         const ctx: Context = { router: {} };
         setContext(Router, ctx);

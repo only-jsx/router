@@ -21,7 +21,7 @@ export interface RouterContext {
     match?: (p: string, u?: string, s?: string, h?: string) => PathMatch;
     navigate?: (p: string, d?: any, r?: boolean) => void;
     onunload?: () => void;
-    changeEvent?: string;
+    changeEvent?: string | null;
     getCurrentPath?: () => string;
     update?: () => void;
 }
@@ -199,16 +199,18 @@ export default function Router(props: RouterProps | RouterChildren | Options, ct
         router.navigate = defNavigate;
     }
 
-    if (!router.changeEvent) {
+    if (router.changeEvent === undefined) {
         router.changeEvent = defChangeEvent;
     }
 
-    const eventHandler = () => router.update?.();
-    
-    window.addEventListener(router.changeEvent, eventHandler);
+    if (router.changeEvent) {
+        const eventHandler = () => router.update?.();
+        
+        window.addEventListener(router.changeEvent, eventHandler);
 
-    router.onunload = () => {
-        window.removeEventListener(router.changeEvent!, eventHandler);
+        router.onunload = () => {
+            window.removeEventListener(router.changeEvent!, eventHandler);
+        }
     }
 
     const fragment = createRouterFragment(children, context);
